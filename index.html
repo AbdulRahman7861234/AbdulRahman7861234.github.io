@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motor Control</title>
+  <script>
+    let port;
+    let messageDiv;
+    let motorState = false; // Tracks motor state: false = OFF, true = ON
+
+    // Connect to Arduino
+    async function connectToArduino() {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        alert("Connected to Arduino!");
+      } catch (error) {
+        alert("Failed to connect: " + error.message);
+      }
+    }
+
+    // Send command to Arduino
+    async function sendCommand(command) {
+      if (!port) {
+        alert("Please connect to Arduino first!");
+        return;
+      }
+
+      // Handle motor ON/OFF logic
+      if (command === '1') {
+        motorState = !motorState; // Toggle motor state
+        messageDiv.innerText = motorState ? "Motor is ON." : "Motor is OFF.";
+      }
+
+      // Handle motor direction change
+      if (command === '2') {
+        messageDiv.innerText = "Motor is now REVERSE.";
+      }
+
+      const writer = port.writable.getWriter();
+      const encoder = new TextEncoder();
+      await writer.write(encoder.encode(command));
+      writer.releaseLock();
+    }
+
+    // Initialize the message div
+    window.onload = function () {
+      messageDiv = document.getElementById("message");
+    };
+  </script>
+</head>
+<body>
+  <h1>Motor Control</h1>
+  <button onclick="connectToArduino()">Connect to Arduino</button>
+  <button onclick="sendCommand('1')">Toggle Motor ON/OFF</button>
+  <button onclick="sendCommand('2')">Switch Direction</button>
+  <div id="message" style="margin-top: 20px; font-weight: bold;"></div>
+</body>
+</html>
